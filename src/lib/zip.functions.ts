@@ -1,5 +1,7 @@
-// Server functions for listing uploads and creating signed URLs for files.
+// Server functions for listing the signed-in user's uploads and creating
+// signed URLs for their files. All access is owner-scoped.
 import { createServerFn } from "@tanstack/react-start";
+import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { z } from "zod";
 
 export interface UploadSummary {
@@ -33,13 +35,12 @@ function mapFile(row: Record<string, unknown>): UploadFileSummary {
   };
 }
 
-export const listUploads = createServerFn({ method: "GET" }).handler(
-  async () => {
-    const { supabaseAdmin } = await import(
-      "@/integrations/supabase/client.server"
-    );
+export const listUploads = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    const { supabase } = context;
 
-    const { data: uploads, error } = await supabaseAdmin
+    const { data: uploads, error } = await supabase
       .from("uploads")
       .select("*")
       .order("created_at", { ascending: false })
@@ -52,7 +53,7 @@ export const listUploads = createServerFn({ method: "GET" }).handler(
     if (!uploads || uploads.length === 0) return { uploads: [] };
 
     const ids = uploads.map((u) => u.id);
-    const { data: files } = await supabaseAdmin
+    const { data: files } = await supabase
       .from("upload_files")
       .select("*")
       .in("upload_id", ids);
@@ -78,14 +79,25 @@ export const listUploads = createServerFn({ method: "GET" }).handler(
     );
 
     return { uploads: result };
-  },
-);
+  });
 
 export const getSignedUrl = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
   .inputValidator((input) =>
     z.object({ storagePath: z.string().min(1) }).parse(input),
   )
-  .handler(async ({ data }) => {
+  .handler(async ({ data, context }) => {
+    // Ownership check: the row must belong to the caller (RLS enforced).
+    const { data: owned } = await context.supabase
+      .from("upload_files")
+      .select("id")
+      .eq("storage_path", data.storagePath)
+      .maybeSingle();
+
+    if (!owned) {
+      throw new Error("Ficheiro não encontrado.");
+    }
+
     const { supabaseAdmin } = await import(
       "@/integrations/supabase/client.server"
     );
