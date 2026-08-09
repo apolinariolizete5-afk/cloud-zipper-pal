@@ -228,6 +228,7 @@ export type Database = {
           size_bytes: number
           storage_path: string
           upload_id: string
+          user_id: string | null
         }
         Insert: {
           created_at?: string
@@ -239,6 +240,7 @@ export type Database = {
           size_bytes: number
           storage_path: string
           upload_id: string
+          user_id?: string | null
         }
         Update: {
           created_at?: string
@@ -250,6 +252,7 @@ export type Database = {
           size_bytes?: number
           storage_path?: string
           upload_id?: string
+          user_id?: string | null
         }
         Relationships: [
           {
@@ -268,6 +271,7 @@ export type Database = {
           filename: string
           id: string
           size_bytes: number
+          user_id: string | null
         }
         Insert: {
           created_at?: string
@@ -275,6 +279,7 @@ export type Database = {
           filename: string
           id?: string
           size_bytes: number
+          user_id?: string | null
         }
         Update: {
           created_at?: string
@@ -282,6 +287,7 @@ export type Database = {
           filename?: string
           id?: string
           size_bytes?: number
+          user_id?: string | null
         }
         Relationships: []
       }
