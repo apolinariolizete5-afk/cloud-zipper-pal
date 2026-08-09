@@ -14,7 +14,74 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      upload_files: {
+        Row: {
+          created_at: string
+          filename: string
+          id: string
+          mime_type: string
+          path: string
+          preview_text: string | null
+          size_bytes: number
+          storage_path: string
+          upload_id: string
+        }
+        Insert: {
+          created_at?: string
+          filename: string
+          id?: string
+          mime_type: string
+          path: string
+          preview_text?: string | null
+          size_bytes: number
+          storage_path: string
+          upload_id: string
+        }
+        Update: {
+          created_at?: string
+          filename?: string
+          id?: string
+          mime_type?: string
+          path?: string
+          preview_text?: string | null
+          size_bytes?: number
+          storage_path?: string
+          upload_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "upload_files_upload_id_fkey"
+            columns: ["upload_id"]
+            isOneToOne: false
+            referencedRelation: "uploads"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      uploads: {
+        Row: {
+          created_at: string
+          file_count: number
+          filename: string
+          id: string
+          size_bytes: number
+        }
+        Insert: {
+          created_at?: string
+          file_count?: number
+          filename: string
+          id?: string
+          size_bytes: number
+        }
+        Update: {
+          created_at?: string
+          file_count?: number
+          filename?: string
+          id?: string
+          size_bytes?: number
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
