@@ -31,7 +31,7 @@ const uploadsQuery = queryOptions({
   queryFn: () => listUploads(),
 });
 
-export const Route = createFileRoute("/")({
+export const Route = createFileRoute("/zip")({
   head: () => ({
     meta: [
       {
