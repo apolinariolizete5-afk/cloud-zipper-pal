@@ -143,6 +143,7 @@ export const Route = createFileRoute("/api/upload")({
             .from("upload_files")
             .insert({
               upload_id: uploadId,
+              user_id: userId,
               path: f.path,
               filename: f.filename,
               mime_type: f.mimeType,
