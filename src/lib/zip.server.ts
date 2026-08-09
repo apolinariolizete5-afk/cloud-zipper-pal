@@ -66,6 +66,7 @@ export function extractZip(zipBytes: Uint8Array): ExtractResult {
     if (!filename) continue;
 
     const data = entries[path];
+    if (!data) continue;
     const sizeBytes = data.byteLength;
     totalSize += sizeBytes;
 
