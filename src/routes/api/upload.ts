@@ -22,12 +22,36 @@ export const Route = createFileRoute("/api/upload")({
   server: {
     handlers: {
       POST: async ({ request }) => {
+        // Uploads are owner-scoped: a valid Supabase bearer token is required.
+        const authHeader = request.headers.get("Authorization") ?? "";
+        const token = authHeader.toLowerCase().startsWith("bearer ")
+          ? authHeader.slice(7).trim()
+          : "";
+        if (!token) {
+          return json({ error: "Autenticação necessária." }, 401);
+        }
+
+        const { createClient } = await import("@supabase/supabase-js");
+        const authClient = createClient(
+          process.env["SUPABASE_URL"]!,
+          process.env["SUPABASE_PUBLISHABLE_KEY"] ??
+            process.env["SUPABASE_ANON_KEY"]!,
+          { auth: { persistSession: false, autoRefreshToken: false } },
+        );
+        const { data: userData, error: userErr } =
+          await authClient.auth.getUser(token);
+        const userId = userData?.user?.id;
+        if (userErr || !userId) {
+          return json({ error: "Sessão inválida." }, 401);
+        }
+
         let formData: FormData;
         try {
           formData = await request.formData();
         } catch {
           return json({ error: "Esperado multipart/form-data." }, 400);
         }
+
 
         const file = formData.get("file");
         if (!(file instanceof File)) {
