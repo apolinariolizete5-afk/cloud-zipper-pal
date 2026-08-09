@@ -106,6 +106,7 @@ export const Route = createFileRoute("/api/upload")({
             filename: file.name,
             size_bytes: file.size,
             file_count: extracted.files.length,
+            user_id: userId,
           })
           .select("id")
           .single();
