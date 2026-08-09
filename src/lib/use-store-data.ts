@@ -21,13 +21,11 @@ export function useOrderSettings() {
   return useQuery({
     queryKey: ["order_settings"],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from("order_settings" as never)
-        .select("*")
-        .eq("id", 1)
-        .maybeSingle();
-      if (error) throw error;
-      return data as OrderSettings | null;
+      const { getPublicOrderSettings } = await import(
+        "./store-settings.functions"
+      );
+      const data = await getPublicOrderSettings();
+      return (data as OrderSettings | null) ?? null;
     },
   });
 }

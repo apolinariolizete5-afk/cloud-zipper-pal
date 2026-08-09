@@ -83,7 +83,17 @@ function Index() {
         formData.append("file", file);
 
         setProgress(30);
-        const res = await fetch("/api/upload", { method: "POST", body: formData });
+        const { supabase } = await import("@/integrations/supabase/client");
+        const { data: sessionData } = await supabase.auth.getSession();
+        const token = sessionData.session?.access_token;
+        if (!token) {
+          throw new Error("Precisa de iniciar sessão para enviar ficheiros.");
+        }
+        const res = await fetch("/api/upload", {
+          method: "POST",
+          body: formData,
+          headers: { Authorization: `Bearer ${token}` },
+        });
         setProgress(90);
         const json = await res.json();
         if (!res.ok) {

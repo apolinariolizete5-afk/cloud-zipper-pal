@@ -22,12 +22,36 @@ export const Route = createFileRoute("/api/upload")({
   server: {
     handlers: {
       POST: async ({ request }) => {
+        // Uploads are owner-scoped: a valid Supabase bearer token is required.
+        const authHeader = request.headers.get("Authorization") ?? "";
+        const token = authHeader.toLowerCase().startsWith("bearer ")
+          ? authHeader.slice(7).trim()
+          : "";
+        if (!token) {
+          return json({ error: "Autenticação necessária." }, 401);
+        }
+
+        const { createClient } = await import("@supabase/supabase-js");
+        const authClient = createClient(
+          process.env["SUPABASE_URL"]!,
+          process.env["SUPABASE_PUBLISHABLE_KEY"] ??
+            process.env["SUPABASE_ANON_KEY"]!,
+          { auth: { persistSession: false, autoRefreshToken: false } },
+        );
+        const { data: userData, error: userErr } =
+          await authClient.auth.getUser(token);
+        const userId = userData?.user?.id;
+        if (userErr || !userId) {
+          return json({ error: "Sessão inválida." }, 401);
+        }
+
         let formData: FormData;
         try {
           formData = await request.formData();
         } catch {
           return json({ error: "Esperado multipart/form-data." }, 400);
         }
+
 
         const file = formData.get("file");
         if (!(file instanceof File)) {
@@ -82,6 +106,7 @@ export const Route = createFileRoute("/api/upload")({
             filename: file.name,
             size_bytes: file.size,
             file_count: extracted.files.length,
+            user_id: userId,
           })
           .select("id")
           .single();
@@ -95,7 +120,7 @@ export const Route = createFileRoute("/api/upload")({
         const stored: StoredFile[] = [];
 
         for (const f of extracted.files) {
-          const storagePath = `${uploadId}/${f.path}`;
+          const storagePath = `${userId}/${uploadId}/${f.path}`;
           const body = f.bytes
             ? new Blob([f.bytes as unknown as BlobPart], { type: f.mimeType })
             : null;
@@ -118,6 +143,7 @@ export const Route = createFileRoute("/api/upload")({
             .from("upload_files")
             .insert({
               upload_id: uploadId,
+              user_id: userId,
               path: f.path,
               filename: f.filename,
               mime_type: f.mimeType,
