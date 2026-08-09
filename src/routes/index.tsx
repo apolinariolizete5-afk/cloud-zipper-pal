@@ -59,7 +59,6 @@ export const Route = createFileRoute("/")({
 function Index() {
   const { data } = useSuspenseQuery(uploadsQuery);
   const queryClient = useQueryClient();
-  const navigate = useNavigate();
 
   const [isDragging, setIsDragging] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
@@ -71,6 +70,7 @@ function Index() {
     async (files: FileList | null) => {
       if (!files || files.length === 0) return;
       const file = files[0];
+      if (!file) return;
       if (!file.name.toLowerCase().endsWith(".zip")) {
         setError("Apenas se aceitam ficheiros .zip");
         return;
@@ -376,4 +376,3 @@ function formatBytes(bytes: number): string {
 
 // silence unused import in some build configs
 void keepPreviousData;
-void navigate;
