@@ -96,7 +96,9 @@ export const Route = createFileRoute("/api/upload")({
 
         for (const f of extracted.files) {
           const storagePath = `${uploadId}/${f.path}`;
-          const body = f.bytes ? new Blob([f.bytes], { type: f.mimeType }) : null;
+          const body = f.bytes
+            ? new Blob([f.bytes as unknown as BlobPart], { type: f.mimeType })
+            : null;
           if (!body) continue;
 
           const { error: upErr } = await supabaseAdmin.storage
