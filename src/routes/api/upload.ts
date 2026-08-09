@@ -120,7 +120,7 @@ export const Route = createFileRoute("/api/upload")({
         const stored: StoredFile[] = [];
 
         for (const f of extracted.files) {
-          const storagePath = `${uploadId}/${f.path}`;
+          const storagePath = `${userId}/${uploadId}/${f.path}`;
           const body = f.bytes
             ? new Blob([f.bytes as unknown as BlobPart], { type: f.mimeType })
             : null;
