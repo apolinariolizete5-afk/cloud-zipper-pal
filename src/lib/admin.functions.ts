@@ -1,12 +1,15 @@
 import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
-import { supabase } from "@/integrations/supabase/client";
 import { z } from "zod";
 
 // Check whether an administrator already exists.
 export const adminExists = createServerFn({ method: "GET" }).handler(
   async () => {
-    const { data, error } = await supabase.rpc("admin_exists");
+    const { supabaseAdmin } = await import(
+      "@/integrations/supabase/client.server"
+    );
+    const { data, error } = await supabaseAdmin.rpc("admin_exists");
+
 
     if (error) {
       throw new Error(error.message);
@@ -21,8 +24,8 @@ export const adminExists = createServerFn({ method: "GET" }).handler(
 // Bootstrap: promote the currently authenticated user if no admin exists.
 export const claimFirstAdmin = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .handler(async () => {
-    const { data, error } = await supabase.rpc("claim_first_admin");
+  .handler(async ({ context }) => {
+    const { data, error } = await context.supabase.rpc("claim_first_admin");
 
     if (error) {
       throw new Error(error.message);
@@ -42,14 +45,14 @@ export const claimFirstAdmin = createServerFn({ method: "POST" })
 // List administrators.
 export const listAdmins = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
-  .handler(async () => {
-    const { data, error } = await supabase.rpc("list_admins");
+  .handler(async ({ context }) => {
+    const { data, error } = await context.supabase.rpc("list_admins");
 
     if (error) {
       throw new Error(error.message);
     }
 
-    return (data ?? []).map((row) => ({
+    return ((data ?? []) as Array<{ user_id: string; email: string | null; created_at: string }>).map((row) => ({
       user_id: row.user_id,
       email: row.email ?? "",
       created_at: row.created_at,
@@ -66,8 +69,8 @@ export const grantAdminByEmail = createServerFn({ method: "POST" })
       })
       .parse(input),
   )
-  .handler(async ({ data }) => {
-    const { data: result, error } = await supabase.rpc(
+  .handler(async ({ data, context }) => {
+    const { data: result, error } = await context.supabase.rpc(
       "grant_admin_by_email",
       {
         target_email: data.email.toLowerCase(),
@@ -101,8 +104,8 @@ export const revokeAdmin = createServerFn({ method: "POST" })
       })
       .parse(input),
   )
-  .handler(async ({ data }) => {
-    const { data: result, error } = await supabase.rpc(
+  .handler(async ({ data, context }) => {
+    const { data: result, error } = await context.supabase.rpc(
       "revoke_admin",
       {
         target_user_id: data.user_id,
@@ -132,7 +135,7 @@ export const resetAdmins = createServerFn({ method: "POST" })
       })
       .parse(input),
   )
-  .handler(async ({ data }) => {
+  .handler(async ({ data, context }) => {
     if (data.deleteAccounts) {
       throw new Error(
         "A eliminação de contas de autenticação requer a Supabase Admin API.",
@@ -140,7 +143,7 @@ export const resetAdmins = createServerFn({ method: "POST" })
     }
 
     const { data: removed, error } =
-      await supabase.rpc("reset_admins");
+      await context.supabase.rpc("reset_admins");
 
     if (error) {
       throw new Error(error.message);
