@@ -319,6 +319,16 @@ export type Database = {
     Functions: {
       admin_exists: { Args: never; Returns: boolean }
       claim_first_admin: { Args: never; Returns: boolean }
+      get_public_order_settings: {
+        Args: never
+        Returns: {
+          external_url: string
+          id: number
+          mode: string
+          whatsapp_number: string
+          whatsapp_template: string
+        }[]
+      }
       grant_admin_by_email: {
         Args: { target_email: string }
         Returns: {
