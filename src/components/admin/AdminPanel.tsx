@@ -503,7 +503,7 @@ function UsersPanel() {
           </div>
         ) : (
           <div className="space-y-2">
-            {(data ?? []).map((u) => (
+            {((data ?? []) as Array<{ user_id: string; email: string; created_at: string }>).map((u) => (
               <div key={u.user_id} className="flex items-center justify-between rounded-xl bg-muted/40 px-3 py-2.5">
                 <div>
                   <p className="text-sm font-medium text-foreground">
