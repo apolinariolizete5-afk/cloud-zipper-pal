@@ -1,12 +1,15 @@
 import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
-import { supabase } from "@/integrations/supabase/client";
 import { z } from "zod";
 
 // Check whether an administrator already exists.
 export const adminExists = createServerFn({ method: "GET" }).handler(
   async () => {
-    const { data, error } = await supabase.rpc("admin_exists");
+    const { supabaseAdmin } = await import(
+      "@/integrations/supabase/client.server"
+    );
+    const { data, error } = await supabaseAdmin.rpc("admin_exists");
+
 
     if (error) {
       throw new Error(error.message);
