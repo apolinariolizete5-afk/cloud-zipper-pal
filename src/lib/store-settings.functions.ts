@@ -1,6 +1,6 @@
-// Public storefront configuration. The order_settings table is no longer
-// readable by anonymous visitors; the storefront reads only the fields it
-// needs through this server function.
+// Public storefront configuration. The order_settings table is not readable by
+// anonymous visitors; the storefront reads only the non-sensitive fields through
+// the security-definer RPC get_public_order_settings.
 import { createServerFn } from "@tanstack/react-start";
 
 export interface PublicOrderSettings {
@@ -13,19 +13,32 @@ export interface PublicOrderSettings {
 
 export const getPublicOrderSettings = createServerFn({ method: "GET" }).handler(
   async () => {
-    const { supabaseAdmin } = await import(
-      "@/integrations/supabase/client.server"
-    );
-    const { data, error } = await supabaseAdmin
-      .from("order_settings")
-      .select("id, mode, whatsapp_number, whatsapp_template, external_url")
-      .eq("id", 1)
-      .maybeSingle();
+    const { createClient } = await import("@supabase/supabase-js");
+    const url = process.env["SUPABASE_URL"] ?? process.env["VITE_SUPABASE_URL"];
+    const key =
+      process.env["SUPABASE_PUBLISHABLE_KEY"] ??
+      process.env["VITE_SUPABASE_PUBLISHABLE_KEY"];
+
+    if (!url || !key) {
+      console.error("getPublicOrderSettings: missing Supabase config");
+      return null;
+    }
+
+    const client = createClient(url, key, {
+      auth: {
+        storage: undefined,
+        persistSession: false,
+        autoRefreshToken: false,
+      },
+    });
+
+    const { data, error } = await client.rpc("get_public_order_settings");
 
     if (error) {
       console.error("getPublicOrderSettings error", error);
       return null;
     }
-    return (data as PublicOrderSettings | null) ?? null;
+    const row = Array.isArray(data) ? data[0] : data;
+    return (row as PublicOrderSettings | null) ?? null;
   },
 );

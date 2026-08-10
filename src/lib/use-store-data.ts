@@ -21,14 +21,23 @@ export function useOrderSettings() {
   return useQuery({
     queryKey: ["order_settings"],
     queryFn: async () => {
-      const { getPublicOrderSettings } = await import(
-        "./store-settings.functions"
-      );
-      const data = await getPublicOrderSettings();
-      return (data as OrderSettings | null) ?? null;
+      try {
+        const { getPublicOrderSettings } = await import(
+          "./store-settings.functions"
+        );
+        const data = await getPublicOrderSettings();
+        if (data) return data as OrderSettings;
+      } catch {
+        // fall through to direct client read
+      }
+      const { data: rpcData } = await supabase.rpc("get_public_order_settings");
+      const row = Array.isArray(rpcData) ? rpcData[0] : rpcData;
+      return (row as OrderSettings | null) ?? null;
     },
+    retry: 1,
   });
 }
+
 
 export async function trackEvent(event_type: "page_view" | "order_click" | "order_submit") {
   try {
